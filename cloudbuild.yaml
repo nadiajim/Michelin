@@ -1,0 +1,29 @@
+# Google Cloud Build Pipeline for Michelin Veterinary Co-Pilot
+steps:
+  # Step 1: Build Container Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/michelin-vet-copilot:latest', '-f', 'backend/Dockerfile', '.']
+
+  # Step 2: Push Container Image to Google Container Registry / Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/michelin-vet-copilot:latest']
+
+  # Step 3: Deploy to Google Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'michelin-vet-copilot'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/michelin-vet-copilot:latest'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
+
+images:
+  - 'gcr.io/$PROJECT_ID/michelin-vet-copilot:latest'

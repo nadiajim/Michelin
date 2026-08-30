@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Michelin — Collaborative Veterinary Clinical Co-Pilot</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Marked for Markdown Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- TOP APP HEADER -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Track Info -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+          <i data-lucide="stethoscope" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg font-bold text-slate-900 tracking-tight">Michelin</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
+              Collaborative Partner Track
+            </span>
+          </div>
+          <p class="text-xs text-slate-500">Veterinary Clinical Diagnostic Co-Pilot • Powered by Gemini & Google Cloud</p>
+        </div>
+      </div>
+
+      <!-- Live Engine Badges -->
+      <div class="hidden md:flex items-center space-x-3">
+        <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Gemini 2.5/3.5 Pro Live</span>
+        </div>
+        <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-xs font-medium">
+          <i data-lucide="cloud" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span>Cloud Run • Aguascalientes Clinic</span>
+        </div>
+        <button onclick="exportClinicalReport()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition">
+          <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+          <span>Export Case Summary</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN THREE-COLUMN CLINICAL WORKSPACE -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- LEFT COLUMN: LONGITUDINAL PATIENT VAULT (3 Cols) -->
+    <section class="lg:col-span-3 space-y-5">
+      
+      <!-- Patient Switcher & Header Card -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Patient Profile</span>
+          <select id="patientSelect" onchange="loadSelectedPatient()" class="text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="pat_michelin_001">Michelin (DSH, 4.2y)</option>
+            <option value="pat_luna_002">Luna (Siamese, 8.5y)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-3.5 pt-1">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl font-bold shadow-inner">
+            🐱
+          </div>
+          <div>
+            <h2 id="patientName" class="text-base font-extrabold text-slate-900">Michelin</h2>
+            <p id="patientMeta" class="text-xs text-slate-500">Domestic Shorthair • 4.2 Years • Male (N)</p>
+            <p id="patientOwner" class="text-xs text-slate-400">Owner: Nadia Jiménez</p>
+          </div>
+        </div>
+
+        <!-- Vitals Metric Badges -->
+        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-center">
+          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Weight</span>
+            <span id="patientWeight" class="text-xs font-bold text-red-600">3.8 kg <span class="text-[9px] text-red-500">(-14%)</span></span>
+          </div>
+          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Temp</span>
+            <span id="patientTemp" class="text-xs font-bold text-amber-600">39.7 °C</span>
+          </div>
+          <div class="bg-slate-50 p-2 rounded-xl border border-slate-100">
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block">Resp Rate</span>
+            <span id="patientResp" class="text-xs font-bold text-slate-700">38 bpm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CRITICAL FALSE-NEGATIVE SENTINEL ALERT BOX -->
+      <div id="safetyAlertBox" class="bg-red-50 rounded-2xl p-4 border border-red-200 shadow-sm space-y-2">
+        <div class="flex items-center space-x-2 text-red-700">
+          <i data-lucide="shield-alert" class="w-5 h-5 text-red-600"></i>
+          <span class="text-xs font-bold uppercase tracking-wider">False-Negative Sentinel</span>
+        </div>
+        <div id="safetyAlertContent" class="text-xs text-red-900 leading-relaxed">
+          Loading safety assessment...
+        </div>
+      </div>
+
+      <!-- LONGITUDINAL OWNER & CLINICAL TIMELINE -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+            <i data-lucide="activity" class="w-4 h-4 text-blue-600"></i>
+            <span>Longitudinal Timeline</span>
+          </span>
+          <button onclick="openAddObservationModal()" class="text-[11px] font-semibold text-blue-600 hover:text-blue-700">
+            + Add Log
+          </button>
+        </div>
+
+        <div id="timelineContainer" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- MIDDLE COLUMN: MULTIMODAL DIAGNOSTIC HUB (5 Cols) -->
+    <section class="lg:col-span-5 space-y-5">
+
+      <!-- Multimodal Tab Navigation -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex space-x-2">
+            <button id="tabBtnImaging" onclick="switchDiagnosticTab('imaging')" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+              Radiographs & Imaging
+            </button>
+            <button id="tabBtnLabs" onclick="switchDiagnosticTab('labs')" class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-50">
+              Lab Panels (CBC/Chem)
+            </button>
+            <button id="tabBtnNotes" onclick="switchDiagnosticTab('notes')" class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-50">
+              Clinical Notes
+            </button>
+          </div>
+          <button onclick="openUploadModal()" class="text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 shadow-sm transition">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+            <span>Upload</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: RADIOGRAPHS & IMAGING VIEWPORT -->
+        <div id="tabContentImaging" class="space-y-3">
+          <div class="xray-canvas-container h-72 flex flex-col items-center justify-center p-4 relative text-center">
+            <!-- Simulated Digital Radiograph Display -->
+            <div class="absolute inset-0 xray-reticle opacity-40"></div>
+            
+            <svg class="w-48 h-48 text-sky-400 opacity-90 drop-shadow-md z-10" viewBox="0 0 200 200" fill="none" stroke="currentColor">
+              <!-- Thoracic Cat Silhouette & Ribcage / Effusion Simulation -->
+              <path d="M 30 140 C 30 80, 80 50, 120 50 C 160 50, 180 90, 180 140 Z" stroke-width="2" stroke="rgba(255,255,255,0.4)" fill="rgba(30,58,138,0.2)"/>
+              <ellipse cx="110" cy="110" rx="35" ry="25" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 2"/>
+              <!-- Fissure line marker -->
+              <line x1="90" y1="100" x2="135" y2="120" stroke="#f87171" stroke-width="2.5"/>
+              <!-- Peritoneal Fluid Shading -->
+              <path d="M 40 135 Q 110 150 170 135" stroke="#fbbf24" stroke-width="3"/>
+            </svg>
+
+            <div class="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-sm px-2.5 py-1 rounded text-[11px] text-white border border-slate-700 font-mono z-20">
+              DICOM: Right Lateral Thorax • Michelin
+            </div>
+            <div class="absolute top-3 right-3 bg-red-950/80 backdrop-blur-sm px-2.5 py-1 rounded text-[11px] text-red-300 border border-red-700 font-semibold z-20 flex items-center space-x-1">
+              <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-red-400"></i>
+              <span>Pleural Fissure Line Widening</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1.5">
+            <div class="font-bold text-slate-800 flex items-center justify-between">
+              <span>Multimodal Vision Analysis (Gemini 2.5/3.5 Vision)</span>
+              <span class="text-emerald-600 font-semibold">Grounded & Verified</span>
+            </div>
+            <p id="imagingFindingsText" class="text-slate-600 leading-relaxed">
+              Mild pleural fissure line prominence in caudoventral thorax; loss of serosal detail in mid-abdomen consistent with mild peritoneal free fluid.
+            </p>
+          </div>
+        </div>
+
+        <!-- TAB 2: LAB BIOMARKER MATRIX -->
+        <div id="tabContentLabs" class="hidden space-y-3">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
+                <tr>
+                  <th class="py-2 px-2.5">Biomarker</th>
+                  <th class="py-2 px-2.5">Value</th>
+                  <th class="py-2 px-2.5">Reference</th>
+                  <th class="py-2 px-2.5">Clinical Flag</th>
+                </tr>
+              </thead>
+              <tbody id="labTableBody" class="divide-y divide-slate-100">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 3: CLINICAL NOTES -->
+        <div id="tabContentNotes" class="hidden space-y-3">
+          <div id="clinicalNotesList" class="space-y-3">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DIFFERENTIAL DIAGNOSIS MATRIX CARD -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+          <div class="flex items-center space-x-1.5 text-slate-900">
+            <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i>
+            <span class="text-xs font-bold uppercase tracking-wider">Live Differential Diagnosis Matrix</span>
+          </div>
+          <span class="text-[11px] text-slate-500 font-medium">Ranked by Clinical Probability</span>
+        </div>
+
+        <div id="differentialContainer" class="space-y-2.5">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- RIGHT COLUMN: INTERACTIVE COLLABORATIVE AGENT (4 Cols) -->
+    <section class="lg:col-span-4 flex flex-col space-y-4">
+
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex-1 flex flex-col overflow-hidden min-h-[580px]">
+        
+        <!-- Co-Pilot Chat Header -->
+        <div class="p-3.5 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-sm">
+              <i data-lucide="bot" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="text-xs font-bold text-slate-900">Michelin Collaborative Co-Pilot</h3>
+              <p class="text-[10px] text-slate-500">Active Two-Way Clinical Inquiry</p>
+            </div>
+          </div>
+          <span class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+            Ready
+          </span>
+        </div>
+
+        <!-- Proactive Inquiries Quick Pills -->
+        <div class="p-2.5 bg-slate-50 border-b border-slate-100">
+          <span class="text-[10px] font-bold text-slate-500 uppercase block mb-1.5 flex items-center space-x-1">
+            <i data-lucide="sparkles" class="w-3 h-3 text-amber-500"></i>
+            <span>Agent Proactive Inquiries (Click to Ask):</span>
+          </span>
+          <div id="proactivePillsContainer" class="flex flex-wrap gap-1.5">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Chat Conversation Messages Container -->
+        <div id="chatMessages" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="chatForm" onsubmit="sendConsultMessage(event)" class="p-3 border-t border-slate-100 bg-white flex items-center space-x-2">
+          <input 
+            type="text" 
+            id="chatInput" 
+            placeholder="Type clinical inquiry or observation..." 
+            class="flex-1 text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
+          />
+          <button 
+            type="submit" 
+            id="sendBtn"
+            class="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-xl shadow-sm transition flex items-center justify-center"
+          >
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </form>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL: ADD CLINICAL / OWNER OBSERVATION -->
+  <div id="obsModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-slate-100">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-900">Add Owner Observation Log</h3>
+        <button onclick="closeAddObservationModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-600 font-semibold mb-1">Reporter</label>
+          <input type="text" id="obsReporter" value="Nadia Jiménez (Owner)" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div>
+          <label class="block text-slate-600 font-semibold mb-1">Observation Note</label>
+          <textarea id="obsNote" rows="3" placeholder="Describe symptoms, appetite changes, breathing patterns..." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+        <div>
+          <label class="block text-slate-600 font-semibold mb-1">Severity</label>
+          <select id="obsSeverity" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2">
+            <option value="Low">Low - Mild routine change</option>
+            <option value="Medium" selected>Medium - Noticeable lethargy / appetite dip</option>
+            <option value="Urgent">Urgent - Respiratory effort / swelling / fever</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 pt-2">
+        <button onclick="closeAddObservationModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+        <button onclick="submitObservation()" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm">Save to Vault</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT -->
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
