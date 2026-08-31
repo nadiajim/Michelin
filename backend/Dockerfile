@@ -1,10 +1,10 @@
-# Production Dockerfile for Michelin Veterinary Co-Pilot on Google Cloud Run
+# Production Dockerfile for Michelin Veterinary Co-Pilot
 FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8080
+    PORT=8000
 
 WORKDIR /app
 
@@ -22,8 +22,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ /app/backend/
 COPY frontend/ /app/frontend/
 
-# Expose port (Cloud Run uses $PORT)
-EXPOSE 8080
+# Expose default port
+EXPOSE 8000
 
-# Launch application with Uvicorn
-CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Launch application with Uvicorn (reads $PORT dynamically)
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

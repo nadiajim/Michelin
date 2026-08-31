@@ -14,8 +14,6 @@ from .tools import VeterinaryDiagnosticTools
 
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 class MichelinAgent:
     """
     Veterinary Clinical Co-Pilot Agent powered by Gemini.
@@ -36,13 +34,14 @@ Key Principles of Collaboration:
 
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
-        self.client = None
+        self.model = None
         if self.api_key:
             try:
-                from google import genai
-                self.client = genai.Client(api_key=self.api_key)
+                import google.generativeai as genai
+                genai.configure(api_key=self.api_key)
+                self.model = genai.GenerativeModel("gemini-1.5-pro")
             except Exception as e:
-                print(f"[MichelinAgent] Warning: Could not initialize Google GenAI client: {e}")
+                print(f"[MichelinAgent] Warning: Could not initialize Google GenAI model: {e}")
 
     def process_consultation(
         self,
@@ -69,9 +68,9 @@ Key Principles of Collaboration:
         # 2. Compute Differential Diagnosis Matrix
         differentials = VeterinaryDiagnosticTools.calculate_differential_matrix(patient)
 
-        # 3. If Gemini Client is configured, perform live multimodal generative inference
+        # 3. If Gemini Client is configured, perform live generative inference
         gemini_response_text = None
-        if self.client:
+        if self.model:
             try:
                 prompt = self._build_gemini_prompt(
                     patient=patient,
@@ -80,10 +79,7 @@ Key Principles of Collaboration:
                     safety_analysis=safety_analysis,
                     differentials=differentials
                 )
-                response = self.client.models.generate_content(
-                    model="gemini-2.5-pro",
-                    contents=prompt
-                )
+                response = self.model.generate_content(prompt)
                 if response and response.text:
                     gemini_response_text = response.text
             except Exception as e:
